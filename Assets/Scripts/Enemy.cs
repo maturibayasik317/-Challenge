@@ -7,7 +7,7 @@ public class Enemy : MonoBehaviour
     public int attack;
     public float moveSpeed;
     public Sprite icon;
-
+    //
     public void Initialize(EnemyData data)
     {
         enemyName = data.enemyName;
