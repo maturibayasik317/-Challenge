@@ -6,8 +6,9 @@ public enum ItemType { Heal, AttackBuf, DefenseBuf}
 public class ItemData : ScriptableObject
 {
     public string itemName;
-    public ItemType titemype;
+    public ItemType itemType;
     public int effectValue;
     public Sprite icon;
     public GameObject prefab;
+
 }

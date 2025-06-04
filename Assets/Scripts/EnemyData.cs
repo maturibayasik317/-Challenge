@@ -9,4 +9,5 @@ public class EnemyData : ScriptableObject
     public float moveSpeed;
     public Sprite icon;
     public GameObject prefab;
+
 }
