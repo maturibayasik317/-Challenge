@@ -1,84 +1,59 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public class MapCreate : MonoBehaviour
 {
-    public int width = 10;
-    public int height = 10;
+    public GameObject playerPrefab;
+    public GameObject enemyPrefab;
+    public GameObject itemPrefab;
     public GameObject floorPrefab;
     public GameObject wallPrefab;
 
-    private CellType[,] grid;
+    public string csvFileName = "MapDate"; // Resources/Name.csv
 
-    public Vector2Int playerSpawnPos;
-    public List<Vector2Int> enemySpawnPositions = new List<Vector2Int>();
-    public List<Vector2Int> itemSpawnPositions = new List<Vector2Int>();
-
-    public void Generate()
+    void Start()
     {
-        grid = new CellType[width, height];
+        CreateMapFromCSV();
+    }
 
-        // 1. 全セルをWallで初期化
-        for (int x = 0; x < width; x++)
+    void CreateMapFromCSV()
+    {
+        TextAsset csvFile = Resources.Load<TextAsset>(csvFileName);
+        if (csvFile == null)
         {
-            for (int y = 0; y < height; y++)
-            {
-                grid[x, y] = CellType.Wall;
-            }
+            Debug.LogError("CSVファイルが見つかりません: " + csvFileName);
+            return;
         }
 
-        // 2. ランダムな部屋を作る（例: 中央に5x5のFloor領域）
-        for (int x = 2; x < width - 2; x++)
-        {
-            for (int y = 2; y < height - 2; y++)
-            {
-                grid[x, y] = CellType.Floor;
-            }
-        }
+        string[] lines = csvFile.text.Split(new[] { "\r\n", "\n" }, System.StringSplitOptions.None);
 
-        // 3. プレイヤー・敵・アイテムのスポーン位置を決定
-        playerSpawnPos = new Vector2Int(width / 2, height / 2);
-        grid[playerSpawnPos.x, playerSpawnPos.y] = CellType.PlayerSpawn;
-
-        // 敵スポーン位置をランダムに3つ
-        enemySpawnPositions.Clear();
-        for (int i = 0; i < 3; i++)
+        for (int y = 0; y < lines.Length; y++)
         {
-            Vector2Int pos;
-            do
-            {
-                pos = new Vector2Int(Random.Range(2, width - 2), Random.Range(2, height - 2));
-            } while (grid[pos.x, pos.y] != CellType.Floor || enemySpawnPositions.Contains(pos));
-            grid[pos.x, pos.y] = CellType.EnemySpawn;
-            enemySpawnPositions.Add(pos);
-        }
+            string[] cells = lines[y].Split(',');
 
-        // アイテムスポーン位置をランダムに2つ
-        itemSpawnPositions.Clear();
-        for (int i = 0; i < 2; i++)
-        {
-            Vector2Int pos;
-            do
+            for (int x = 0; x < cells.Length; x++)
             {
-                pos = new Vector2Int(Random.Range(2, width - 2), Random.Range(2, height - 2));
-            } while (grid[pos.x, pos.y] != CellType.Floor || itemSpawnPositions.Contains(pos));
-            grid[pos.x, pos.y] = CellType.ItemSpawn;
-            itemSpawnPositions.Add(pos);
-        }
+                Vector3 pos = new Vector3(x, 0, -y); 
 
-        // 4. 実際にプレハブを配置（エディターやゲーム画面に出す場合）
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                Vector3 pos = new Vector3(x, 0, y);
-                if (grid[x, y] == CellType.Wall)
+                string cell = cells[x].Trim();
+
+                // 床は常に生成
+                Instantiate(floorPrefab, pos, Quaternion.identity, transform);
+
+                switch (cell)
                 {
-                    Instantiate(wallPrefab, pos, Quaternion.identity, transform);
-                }
-                else
-                {
-                    Instantiate(floorPrefab, pos, Quaternion.identity, transform);
+                    case "W":
+                        Instantiate(wallPrefab, pos + Vector3.up * 0.5f, Quaternion.identity, transform);
+                        break;
+                    case "P":
+                        Instantiate(playerPrefab, pos + Vector3.up * 0.5f, Quaternion.identity);
+                        break;
+                    case "E":
+                        Instantiate(enemyPrefab, pos + Vector3.up * 0.5f, Quaternion.identity, transform);
+                        break;
+                    case "I":
+                        Instantiate(itemPrefab, pos + Vector3.up * 0.5f, Quaternion.identity, transform);
+                        break;
                 }
             }
         }
